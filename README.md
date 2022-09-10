@@ -1,10 +1,10 @@
 # Auth Service Lambda
 
 ## Requrements
-* Poetry
+* virtual-env
 
-### Poetry Usage
-1. **Initialize** new Poetry Directory: `poetry init`  
-2. **Install** new dependencies: `poetry add <dependency>`  
-3. **Run** virtual environment: `poetry shell`  
-4. **Deactivate** virtual environment: `exit`  
+## Usage  
+1. **Create** virtual environment: `python3 -m venv <environment name>`  
+2. **Activate** virtual environment: `source ./<environment name>/bin/activate` 
+3. **Install** requirements: `pip3 install -r requirements.txt`  
+4. **Exit** environment: `deactivate`  

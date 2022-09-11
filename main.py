@@ -1,5 +1,8 @@
-from typing import Union, Optional
+from dotenv import load_dotenv
+import os
 
+
+from typing import Union, Optional
 from fastapi import FastAPI
 from pydantic import BaseModel
 
@@ -10,11 +13,6 @@ from models.Account import Account, account, UpdateAccount
 
 app = FastAPI()
 
-
-class Item(BaseModel):
-    name: str
-    price: float
-    is_offer: Union[bool, None] = None
 
 #  ------------------------ get Method -------------------------
 
@@ -33,11 +31,36 @@ def get_contact(contact_id: int):
     return contact[contact_id]
 
 
-@app.get("/get-account/{account_id}")
-def get_account(account_id: int):
-    if account_id not in account:
+'''
+- /getContactsByUID
+    - In: UID
+    - Out: List<Contact Objects>
+'''
+
+# don't test it
+
+
+@app.get("/getContactsByUID")
+def get_contact_uid(uid: int):
+    for contact_id in contact:
+        if account[contact_id]["UID"] == uid:
+            return contact[contact_id]["connection"]
         return {"Data": "Not Found"}
-    return account[account_id]
+
+
+'''
+- /getAccountInfoByUID
+    - in: UID
+    - out: AccountModel
+'''
+
+
+@app.get("/getAccountInfoByUID")
+def get_accountInfoByUID(uid: int):
+    for account_id in account:
+        if account[account_id]["UID"] == uid:
+            return account[account_id]
+    return {"Account": "Not Found"}
 
 
 #  ------------------------ create Method -------------------------
@@ -51,18 +74,51 @@ def create_date(date_id: int, day: Date):
     return date[date_id]
 
 
-@app.post("/create-contact/{contact_id}")
+'''
+- /addNewContact
+    - in:  uid1, uid2,
+    - out: confirmation: boolean
+    - also: create the new contact record, set null for cadence
+    @contact_id: id of the host user
+    @user: add new one
+'''
+
+
+@app.post("/addNewContact/{contact_id}")
 def create_contact(contact_id: int, user: Contact):
     if contact_id in contact:
-        return {"Error": "Contact has already exists"}
+        return False
     contact[contact_id] = user
-    return contact[contact_id]
+    return True
 
 
+'''
 @app.post("/create-cadence/{cadence_id}")
 def create_cadence(cadence_id: int, user: Cadence):
     if cadence_id in cadence:
         return {"Error": "Cadence has already exists"}
+    cadence[cadence_id] = user
+
+    return cadence[cadence_id]
+'''
+
+
+'''
+- /setNewCadence
+    - In: Contact ID: String, NewInterval: Int
+    - Out: confirmation: boolean
+    - also: create new cadence record if no cadence yet and add to contact, update next meeting
+    this is create a new Cadence in case we don't have a Cadence yet
+
+'''
+
+
+@app.post("/setNewCadence{cadence_id}")
+def set_newCadence(cadence_id: int, user: Cadence):
+    confirmation = False
+    if cadence_id in cadence:
+        # Cadence already exist -> need to update (put method)
+        return confirmation
     cadence[cadence_id] = user
 
     return cadence[cadence_id]
@@ -93,7 +149,7 @@ def update_date(date_id: int, day: UpdateDate):
 
 
 @app.put("/update-contact/{contact_it}")
-def update(contact_id: int, user: UpdateContact):
+def update_contact(contact_id: int, user: UpdateContact):
     if contact_id not in contact:
         return {"Error": "Contact ID does not exists"}
 
@@ -109,11 +165,19 @@ def update(contact_id: int, user: UpdateContact):
     return contact[contact_id]
 
 
+'''
+- /setNewCadence
+    - In: Contact ID: String, NewInterval: Int (/put)
+    - Out: confirmation: boolean
+    - also: create new cadence record(post method) if no cadence yet and add to contact, update next meeting
+    UPDATE Cadence: user can chose any information they want to update
+'''
+
+
 @app.put("/update-cadence/{cadence_id}")
-def update(cadence_id: int, user: UpdateCadence):
+def update_cadence(cadence_id: int, user: UpdateCadence):
     if cadence_id not in cadence:
         return {"Error": "Cadence ID does not exists"}
-
     if user.interval != None:
         cadence[cadence_id].interval = user.interval
     if user.mostRecentMeeting != None:
@@ -126,9 +190,45 @@ def update(cadence_id: int, user: UpdateCadence):
     return cadence[cadence_id]
 
 
-@app.put("/update-account/{account_id}")
-def update(account_id: int, user: UpdateAccount):
+'''
+- /updateAccountInfo
+    - in:  uid, name:String, birthday: DateTime?, #homecity: String?
+    - out: isUpdateSuccessful: boolean
+'''
+
+
+@app.put("/updateAccountInfo/{account_id}")
+def update_account(account_id: int, user: UpdateAccount):
     if account_id not in account:
+        account[account_id].isUpdateSuccessful = False
+        return account[account_id].isUpdateSuccessful
+
+    if user.UID != None:
+        account[account_id].UID = user.UID
+    if user.name != None:
+        account[account_id].name = user.name
+    if user.location != None:
+        account[account_id].location = user.location
+    if user.birthday != None:
+        account[account_id].birthday = user.birthday
+    if user.phoneNumber != None:
+        account[account_id].phoneNumber = user.phoneNumber
+    if user.timezone != None:
+        account[account_id].timezone = user.timezone
+    if user.isDelete != None:
+        account[account_id].isDelete = user.isDelete
+    if user.isUpdateSuccessful != None:
+        account[account_id].isUpdateSuccessful = user.isUpdateSuccessful
+        account[account_id].isUpdateSuccessful = True
+
+    return account[account_id].isUpdateSuccessful
+
+
+'''
+@app.put("updateAccountInfo/{account_id}")
+def update_account_info(account_id: int, user: UpdateAccount):
+    if account_id not in account:
+        #account[account_id].isUpdateSuccessful = False
         return {"Error": "Account ID does not exists"}
 
     if user.UID != None:
@@ -145,5 +245,8 @@ def update(account_id: int, user: UpdateAccount):
         account[account_id].timezone = user.timezone
     if user.isDelete != None:
         account[account_id].isDelete = user.isDelete
-
+    if user.isUpdateSuccessful != None:
+        account[account_id].isUpdateSuccessful = user.isUpdateSuccessful
+        #account[account_id].isUpdateSuccessful = True
     return account[account_id]
+'''

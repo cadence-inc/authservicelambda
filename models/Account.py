@@ -2,7 +2,6 @@ from typing import Union, Optional
 
 from fastapi import FastAPI
 from pydantic import BaseModel
-from models.Contact import Contact
 from models.Date import Date, date
 
 
@@ -14,7 +13,18 @@ account = {
         "birthday": date,
         "phoneNumber": "123456789",
         "timezone": "ET",
-        "isDelete": False
+        "isDelete": False,
+        "isUpdateSuccessful:": True
+    },
+    2: {
+        "UID": 124,
+        "name": "Bao",
+        "location": "Orlando",
+        "birthday": date,
+        "phoneNumber": "123456789",
+        "timezone": "ET",
+        "isDelete": False,
+        "isUpdateSuccessful:": True
     }
 }
 
@@ -27,6 +37,7 @@ class Account(BaseModel):
     phoneNumber: str
     timezone: str
     isDelete: bool
+    isUpdateSuccessful: bool
 
 
 class UpdateAccount(BaseModel):
@@ -37,3 +48,4 @@ class UpdateAccount(BaseModel):
     phoneNumber: Optional[str] = None
     timezone: Optional[str] = None
     isDelete: Optional[bool] = None
+    isUpdateSuccessful: Optional[bool] = None
